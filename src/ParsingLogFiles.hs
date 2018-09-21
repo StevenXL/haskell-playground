@@ -4,7 +4,7 @@ module ParsingLogFiles where
 
 import Data.Word (Word8)
 import Data.Time (LocalTime(..), fromGregorian, TimeOfDay(..))
-import Data.Attoparsec.ByteString.Char8 (char, digit, string, endOfLine, Parser, parseOnly, many', count, decimal)
+import Data.Attoparsec.ByteString.Char8 (char, digit, string, endOfLine, Parser, parseOnly, many', count, decimal, option)
 import Control.Applicative ((<|>))
 import qualified Data.ByteString as B
 
@@ -23,7 +23,7 @@ data LogEntry = LogEntry { entryTime :: LocalTime
 type Log = [LogEntry]
 
 main :: IO ()
-main = print $ parseOnly logParser logsWithSource
+main = print $ parseOnly logParser (logs <> "\n" <> logsWithSource)
 
 logParser :: Parser Log
 logParser = many' $ logEntryParser <* endOfLine
@@ -35,8 +35,7 @@ logEntryParser = do
   entryIP <- ipParser
   char ' '
   entryProduct <- productParser
-  char ' '
-  entrySource <- sourceParser
+  entrySource <- option NoAnswer $ char ' ' >> sourceParser
   return $ LogEntry entryTime entryIP entryProduct entrySource
 
 timeParser :: Parser LocalTime
