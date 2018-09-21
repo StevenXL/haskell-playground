@@ -12,15 +12,18 @@ data IP = IP Word8 Word8 Word8 Word8 deriving Show
 
 data Product = Mouse | Keyboard | Monitor | Speakers deriving Show
 
+data Source = Internet | Friend | NoAnswer deriving Show
+
 data LogEntry = LogEntry { entryTime :: LocalTime
                          , entryIP :: IP
                          , entryProduct :: Product
+                         , entrySource :: Source
                          } deriving Show
 
 type Log = [LogEntry]
 
 main :: IO ()
-main = print $ parseOnly logParser logs
+main = print $ parseOnly logParser logsWithSource
 
 logParser :: Parser Log
 logParser = many' $ logEntryParser <* endOfLine
@@ -32,7 +35,9 @@ logEntryParser = do
   entryIP <- ipParser
   char ' '
   entryProduct <- productParser
-  return $ LogEntry entryTime entryIP entryProduct
+  char ' '
+  entrySource <- sourceParser
+  return $ LogEntry entryTime entryIP entryProduct entrySource
 
 timeParser :: Parser LocalTime
 timeParser = do
@@ -77,15 +82,32 @@ monitorParser = string "monitor" >> return Monitor
 speakersParser :: Parser Product
 speakersParser = string "speakers" >> return Speakers
 
+sourceParser :: Parser Source
+sourceParser = internetParser <|> friendParser <|> noanswerParser
+
+internetParser :: Parser Source
+internetParser = string "internet" >> return Internet
+
+friendParser :: Parser Source
+friendParser = string "friend" >> return Friend
+
+noanswerParser :: Parser Source
+noanswerParser = string "noanswer" >> return NoAnswer
+
 logs :: B.ByteString
 logs = B.concat [ "2013-06-29 11:16:23 124.67.34.60 keyboard\n"
-              , "2013-06-29 11:32:12 212.141.23.67 mouse\n"
-              , "2013-06-29 11:33:08 212.141.23.67 monitor\n"
-              , "2013-06-29 12:12:34 125.80.32.31 speakers\n"
-              , "2013-06-29 12:51:50 101.40.50.62 keyboard\n"
-              , "2013-06-29 13:10:45 103.29.60.13 mouse"
-              ]
+                , "2013-06-29 11:32:12 212.141.23.67 mouse\n"
+                , "2013-06-29 11:33:08 212.141.23.67 monitor\n"
+                , "2013-06-29 12:12:34 125.80.32.31 speakers\n"
+                , "2013-06-29 12:51:50 101.40.50.62 keyboard\n"
+                , "2013-06-29 13:10:45 103.29.60.13 mouse"
+                ]
 
-
-{-
- -}
+logsWithSource :: B.ByteString
+logsWithSource = B.concat [ "2013-06-29 11:16:23 124.67.34.60 keyboard internet\n"
+                          , "2013-06-29 11:32:12 212.141.23.67 mouse internet\n"
+                          , "2013-06-29 11:33:08 212.141.23.67 monitor friend\n"
+                          , "2013-06-29 12:12:34 125.80.32.31 speakers noanswer\n"
+                          , "2013-06-29 12:51:50 101.40.50.62 keyboard internet\n"
+                          , "2013-06-29 13:10:45 103.29.60.13 mouse internet"
+                          ]
