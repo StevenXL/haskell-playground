@@ -3,6 +3,8 @@
 module ParsingLogFiles where
 
 import Data.Word (Word8)
+import Data.List (maximumBy)
+import Data.Maybe (fromMaybe)
 import Data.Char (digitToInt)
 import Data.Time (LocalTime(..), fromGregorian, TimeOfDay(..))
 import Data.Attoparsec.ByteString.Char8 (char, digit, string, endOfLine, Parser, parseOnly, many', count, decimal, option)
@@ -11,7 +13,7 @@ import qualified Data.ByteString as B
 
 data IP = IP Word8 Word8 Word8 Word8 deriving Show
 
-data Product = Mouse | Keyboard | Monitor | Speakers deriving (Show, Enum)
+data Product = Mouse | Keyboard | Monitor | Speakers deriving (Show, Enum, Eq)
 
 productFromID :: Int -> Product
 productFromID id = toEnum (id - 1)
@@ -163,3 +165,23 @@ logsInFrench = B.concat [  "154.41.32.99 29/06/2015 15:32:23 4 internet\n"
                          , "100.23.32.41 29/06/2015 19:01:09 1 internet\n"
                          , "151.123.45.67 29/06/2015 20:30:13 2 internet"
                          ]
+
+-- EXTRACTING INFORMATION
+type Sales = [(Product, Int)]
+
+salesOf :: Product -> Sales -> Int
+salesOf product sales = fromMaybe 0 $ lookup product sales
+
+addSale :: Product -> Sales -> Sales
+addSale p [] = [(p,1)]
+addSale p ((x,n):xs) = if p == x then (x,n+1):xs
+                                 else (x,n) : addSale p xs
+
+mostSold :: Sales -> Maybe (Product, Int)
+mostSold [] = Nothing
+mostSold sales = Just $ maximumBy compareBySales sales
+  where compareBySales x y = snd x `compare` snd y
+
+sales :: Log -> Sales
+sales log = foldr toSales [] log
+  where toSales logEntry sales = addSale (entryProduct logEntry) sales
