@@ -2,6 +2,8 @@
 
 module ParsingLogFiles where
 
+import Data.Maybe (maybe)
+import Data.Either (either)
 import Data.Word (Word8)
 import Data.List (maximumBy)
 import Data.Maybe (fromMaybe)
@@ -29,7 +31,10 @@ data LogEntry = LogEntry { entryTime :: LocalTime
 type Log = [LogEntry]
 
 main :: IO ()
-main = print parseLogs
+main = either printErrorMsg printMostSold parseLogs
+  where printErrorMsg = print . ("A problem occurred parsing the logs: " <>)
+        printMostSold logs = maybe (print "Nothing sold yet") (printBestProduct) (mostSold $ sales logs)
+        printBestProduct (p, i) = print $ "The most sold product is (the) " <> show p <> ". It has sold " <> show i <> " units."
 
 parseLogs :: Either String Log
 parseLogs = do
