@@ -27,10 +27,22 @@ data LogEntry = LogEntry { entryTime :: LocalTime
 type Log = [LogEntry]
 
 main :: IO ()
-main = print $ parseOnly logParser logsInFrench
+main = print parseLogs
 
-logParser :: Parser Log
-logParser = many' $ logEntryParserFrench <* endOfLine
+parseLogs :: Either String Log
+parseLogs = do
+  usLogs     <- parseOnly logParserUSFormat (logs <> "\n" <> logsWithSource)
+  frenchLogs <- parseOnly logParserFrenchFormat logsInFrench
+  return $ merge usLogs frenchLogs
+
+merge :: [a] -> [a] -> [a]
+merge = (++)
+
+logParserUSFormat :: Parser Log
+logParserUSFormat = many' $ logEntryParser <* endOfLine
+
+logParserFrenchFormat :: Parser Log
+logParserFrenchFormat = many' $ logEntryParserFrench <* endOfLine
 
 logEntryParser :: Parser LogEntry
 logEntryParser = do
@@ -136,18 +148,18 @@ logs = B.concat [ "2013-06-29 11:16:23 124.67.34.60 keyboard\n"
                 ]
 
 logsWithSource :: B.ByteString
-logsWithSource = B.concat [ "2013-06-29 11:16:23 124.67.34.60 keyboard internet\n"
-                          , "2013-06-29 11:32:12 212.141.23.67 mouse internet\n"
-                          , "2013-06-29 11:33:08 212.141.23.67 monitor friend\n"
-                          , "2013-06-29 12:12:34 125.80.32.31 speakers noanswer\n"
-                          , "2013-06-29 12:51:50 101.40.50.62 keyboard internet\n"
-                          , "2013-06-29 13:10:45 103.29.60.13 mouse internet"
+logsWithSource = B.concat [ "2014-06-29 11:16:23 124.67.34.60 keyboard internet\n"
+                          , "2014-06-29 11:32:12 212.141.23.67 mouse internet\n"
+                          , "2014-06-29 11:33:08 212.141.23.67 monitor friend\n"
+                          , "2014-06-29 12:12:34 125.80.32.31 speakers noanswer\n"
+                          , "2014-06-29 12:51:50 101.40.50.62 keyboard internet\n"
+                          , "2014-06-29 13:10:45 103.29.60.13 mouse internet"
                           ]
 
 logsInFrench :: B.ByteString
-logsInFrench = B.concat [ "154.41.32.99 29/06/2013 15:32:23 4 internet\n"
-                         , "76.125.44.33 29/06/2013 16:56:45 3 noanswer\n"
-                         , "123.45.67.89 29/06/2013 18:44:29 4 friend\n"
-                         , "100.23.32.41 29/06/2013 19:01:09 1 internet\n"
-                         , "151.123.45.67 29/06/2013 20:30:13 2 internet"
+logsInFrench = B.concat [  "154.41.32.99 29/06/2015 15:32:23 4 internet\n"
+                         , "76.125.44.33 29/06/2015 16:56:45 3 noanswer\n"
+                         , "123.45.67.89 29/06/2015 18:44:29 4 friend\n"
+                         , "100.23.32.41 29/06/2015 19:01:09 1 internet\n"
+                         , "151.123.45.67 29/06/2015 20:30:13 2 internet"
                          ]
