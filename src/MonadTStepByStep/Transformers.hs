@@ -32,3 +32,7 @@ eval0 env (Abs name exp) = FunVal env name exp
 eval0 env (App exp exp') = let FunVal env' n body = eval0 env exp -- partiality
                                val2 = eval0 env exp'
                            in eval0 (M.insert n val2 env') body
+
+-- STEP 3: Write a test expression
+exampleExp :: Exp
+exampleExp = Lit 12 `Plus` (App (Abs "x" (Var "x")) (Lit 4 `Plus` Lit 2))
