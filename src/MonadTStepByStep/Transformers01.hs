@@ -1,10 +1,11 @@
 -- Monad Transformers - Step By Step (https://page.mi.fu-berlin.de/scravy/realworldhaskell/materialien/monad-transformers-step-by-step.pdf)
-module MonadTStepByStep.Transformers where
+module MonadTStepByStep.Transformers01 where
 
 import Data.Maybe (fromJust, maybe)
 import           Data.Map (Map)
 import qualified Data.Map as M
 import Control.Monad.Identity (Identity, runIdentity)
+import Control.Monad.Except (ExceptT, throwError, runExceptT)
 
 -- STEP 1: Define the types of our programming language.
 
