@@ -25,6 +25,7 @@ dependencies:
 - time
 - bytestring
 - containers
+- mtl
 
 library:
   source-dirs: src
