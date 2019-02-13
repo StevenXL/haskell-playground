@@ -13,17 +13,17 @@ data Token
   = TokenOp Operator
   | TokenIdentifier String
   | TokenNumber Int
+  | TokenSpace
   deriving (Eq, Show)
 
 data Expression
 
-tokenize :: String -> [Token]
-tokenize [] = []
-tokenize (c:str)
-  | c `elem` "+-/*" = TokenOp (operator c) : tokenize str
-  | Char.isDigit c = TokenNumber (Char.digitToInt c) : tokenize str
-  | Char.isAlpha c = TokenIdentifier [c] : tokenize str
-  | Char.isSpace c = tokenize str
+tokenize :: Char -> Token
+tokenize c
+  | c `elem` "+-/*" = TokenOp (operator c)
+  | Char.isDigit c = TokenNumber (Char.digitToInt c)
+  | Char.isAlpha c = TokenIdentifier [c]
+  | Char.isSpace c = TokenSpace
   | otherwise = error (unwords ["Cannot tokenize charachter", [c], "."])
 
 parse :: [Token] -> Expression
