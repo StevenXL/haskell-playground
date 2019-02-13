@@ -1,6 +1,17 @@
 module BasicsOfHaskell.SymbolicCalculator where
 
+data Operator
+  = Plus
+  | Minus
+  | Mult
+  | Div
+  deriving (Eq, Show)
+
 data Token
+  = TokenOp Operator
+  | TokenIdentifier String
+  | TokenNumber Int
+  deriving (Eq, Show)
 
 data Expression
 
