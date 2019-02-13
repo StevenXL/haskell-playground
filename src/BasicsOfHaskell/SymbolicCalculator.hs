@@ -24,17 +24,14 @@ tokenize [] = []
 tokenize (c:str)
   | c `elem` "+-/*" = TokenOp (operator c) : tokenize str
   | Char.isDigit c = TokenNumber (Char.digitToInt c) : tokenize str
-  | Char.isAlpha c =
-    let (token, string) = identifier c str
-     in token : tokenize string
+  | Char.isAlpha c = identifier c str
   | Char.isSpace c = TokenSpace : tokenize str
   | otherwise = error (unwords ["Cannot tokenize charachter", [c], "."])
 
-identifier :: Char -> String -> (Token, String)
-identifier c str = (identifierToken, string)
+identifier :: Char -> String -> [Token]
+identifier c str = TokenIdentifier (c : alphaNums) : tokenize rest
   where
-    identifierToken = TokenIdentifier (c : restOfToken)
-    (restOfToken, string) = List.span (/= ' ') str
+    (alphaNums, rest) = List.span (Char.isAlphaNum) str
 
 parse :: [Token] -> Expression
 parse = undefined
