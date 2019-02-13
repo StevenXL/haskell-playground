@@ -18,16 +18,14 @@ data Token
 
 data Expression
 
-tokenizeChar :: Char -> Token
-tokenizeChar c
-  | c `elem` "+-/*" = TokenOp (operator c)
-  | Char.isDigit c = TokenNumber (Char.digitToInt c)
-  | Char.isAlpha c = TokenIdentifier [c]
-  | Char.isSpace c = TokenSpace
-  | otherwise = error (unwords ["Cannot tokenize charachter", [c], "."])
-
 tokenize :: String -> [Token]
-tokenize = map tokenizeChar
+tokenize [] = []
+tokenize (c:str)
+  | c `elem` "+-/*" = TokenOp (operator c) : tokenize str
+  | Char.isDigit c = TokenNumber (Char.digitToInt c) : tokenize str
+  | Char.isAlpha c = TokenIdentifier [c] : tokenize str
+  | Char.isSpace c = TokenSpace : tokenize str
+  | otherwise = error (unwords ["Cannot tokenize charachter", [c], "."])
 
 parse :: [Token] -> Expression
 parse = undefined
