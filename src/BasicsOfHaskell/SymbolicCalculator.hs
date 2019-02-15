@@ -38,6 +38,8 @@ data Tree
   | VarNode String
   deriving (Show)
 
+-- THE CODE IN THIS SECTION IS OUR LEXER
+-- A LEXER CONVERTS OUR STRING INTO TOKENS
 tokenize :: String -> [Token]
 tokenize [] = []
 tokenize (c:str)
@@ -81,6 +83,11 @@ expression tokens =
             _ -> error "Only variables can be assigned to"
         _ -> (termTree, toks)
 
+term :: [Token] -> (Tree, [Token])
+term = error "term is not defined"
+
+factor :: [Token] -> (Tree, [Token])
+factor = undefined
 
 lookAhead :: [Token] -> Token
 lookAhead [] = TokenEnd
