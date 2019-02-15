@@ -69,7 +69,7 @@ parse = undefined
 
 expression :: [Token] -> (Tree, [Token])
 expression tokens =
-  let (termTree, toks) = term toks
+  let (termTree, toks) = term tokens
    in case lookAhead toks of
         (TokenOp op)
           | elem op [Plus, Minus] ->
