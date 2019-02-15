@@ -81,6 +81,15 @@ expression tokens =
             _ -> error "Only variables can be assigned to"
         _ -> (termTree, toks)
 
+
+lookAhead :: [Token] -> Token
+lookAhead [] = TokenEnd
+lookAhead (t:ts) = t
+
+accept :: [Token] -> [Token]
+accept [] = error "Nothing to accept"
+accept (t:ts) = ts
+
 evaluate :: Expression -> Double
 evaluate = undefined
 
