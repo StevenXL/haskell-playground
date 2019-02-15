@@ -12,6 +12,9 @@ data Operator
 
 data Token
   = TokenOp Operator
+  | TokenAssign
+  | TokenLParen
+  | TokenRParen
   | TokenIdentifier String
   | TokenNumber Int
   | TokenSpace
@@ -23,6 +26,9 @@ tokenize :: String -> [Token]
 tokenize [] = []
 tokenize (c:str)
   | c `elem` "+-/*" = TokenOp (operator c) : tokenize str
+  | c == '=' = TokenAssign : tokenize str
+  | c == '(' = TokenLParen : tokenize str
+  | c == ')' = TokenRParen : tokenize str
   | Char.isDigit c = number c str
   | Char.isAlpha c = identifier c str
   | Char.isSpace c = TokenSpace : tokenize str
