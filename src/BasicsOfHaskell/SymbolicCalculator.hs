@@ -18,6 +18,7 @@ data Token
   | TokenIdentifier String
   | TokenNumber Int
   | TokenSpace
+  | TokenEnd
   deriving (Eq, Show)
 
 data Expression
