@@ -61,8 +61,25 @@ number c str = TokenNumber number : tokenize rest
     number = read $ c : digits
     (digits, rest) = List.span (Char.isDigit) str
 
+-- THE CODE IN THIS SECTION IS OUR PARSER
 parse :: [Token] -> Expression
 parse = undefined
+
+expression :: [Token] -> (Tree, [Token])
+expression tokens =
+  let (termTree, toks) = term toks
+   in case lookAhead toks of
+        (TokenOp op)
+          | elem op [Plus, Minus] ->
+            let (exTree, toks') = expression (accept toks)
+             in (SumNode op termTree exTree, toks')
+        TokenAssign ->
+          case termTree of
+            VarNode str ->
+              let (exTree, toks') = expression (accept toks)
+               in (AssignNode str exTree, toks')
+            _ -> error "Only variables can be assigned to"
+        _ -> (termTree, toks)
 
 evaluate :: Expression -> Double
 evaluate = undefined
