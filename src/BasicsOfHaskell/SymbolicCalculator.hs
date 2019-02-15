@@ -22,6 +22,21 @@ data Token
 
 data Expression
 
+data Tree
+  = SumNode Operator
+            Tree
+            Tree
+  | ProdNode Operator
+             Tree
+             Tree
+  | AssignNode String
+               Tree
+  | UnaryNode Operator
+              Tree
+  | NumNode Double
+  | VarNode String
+  deriving (Show)
+
 tokenize :: String -> [Token]
 tokenize [] = []
 tokenize (c:str)
