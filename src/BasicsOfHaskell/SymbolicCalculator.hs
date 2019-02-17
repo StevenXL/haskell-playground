@@ -17,7 +17,6 @@ data Token
   | TokenRParen
   | TokenIdentifier String
   | TokenNumber Int
-  | TokenSpace
   | TokenEnd
   deriving (Eq, Show)
 
@@ -47,7 +46,7 @@ tokenize (c:str)
   | c == ')' = TokenRParen : tokenize str
   | Char.isDigit c = number c str
   | Char.isAlpha c = identifier c str
-  | Char.isSpace c = TokenSpace : tokenize str
+  | Char.isSpace c = tokenize str
   | otherwise = error (unwords ["Cannot tokenize charachter", [c], "."])
 
 identifier :: Char -> String -> [Token]
