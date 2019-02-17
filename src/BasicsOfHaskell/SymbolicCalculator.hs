@@ -21,8 +21,6 @@ data Token
   | TokenEnd
   deriving (Eq, Show)
 
-data Expression
-
 data Tree
   = SumNode Operator
             Tree
@@ -64,7 +62,7 @@ number c str = TokenNumber number : tokenize rest
     (digits, rest) = List.span (Char.isDigit) str
 
 -- THE CODE IN THIS SECTION IS OUR PARSER
-parse :: [Token] -> Expression
+parse :: [Token] -> Tree
 parse = undefined
 
 expression :: [Token] -> (Tree, [Token])
@@ -117,7 +115,7 @@ accept :: [Token] -> [Token]
 accept [] = error "Nothing to accept"
 accept (t:ts) = ts
 
-evaluate :: Expression -> Double
+evaluate :: Tree -> Double
 evaluate = undefined
 
 operator :: Char -> Operator
