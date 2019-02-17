@@ -92,7 +92,7 @@ term tokens =
         (TokenOp op)
           | elem op [Mult, Div] ->
             let (termTree, toks') = term (accept toks)
-             in (ProdNode op factorTree termTree, accept toks')
+             in (ProdNode op factorTree termTree, toks')
         _ -> (factorTree, toks)
 
 factor :: [Token] -> (Tree, [Token])
