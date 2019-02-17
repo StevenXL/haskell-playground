@@ -84,10 +84,30 @@ expression tokens =
         _ -> (termTree, toks)
 
 term :: [Token] -> (Tree, [Token])
-term = error "term is not defined"
+term tokens =
+  let (factorTree, toks) = factor tokens
+   in case lookAhead toks of
+        (TokenOp op)
+          | elem op [Mult, Div] ->
+            let (termTree, toks') = term (accept toks)
+             in (ProdNode op factorTree termTree, accept toks')
+        _ -> (factorTree, toks)
 
 factor :: [Token] -> (Tree, [Token])
-factor = undefined
+factor tokens =
+  case lookAhead tokens of
+    (TokenNumber x) -> (NumNode $ fromInteger $ toInteger x, accept tokens)
+    (TokenIdentifier str) -> (VarNode str, accept tokens)
+    (TokenOp op)
+      | elem op [Plus, Minus] ->
+        let (factTree, toks) = factor (accept tokens)
+         in (UnaryNode op factTree, toks)
+    TokenLParen ->
+      let (expTree, toks) = expression (accept toks)
+       in if lookAhead toks /= TokenRParen
+            then error "Missing right parenthesis"
+            else (expTree, accept toks)
+    _ -> error $ "Parse error on tokens: " ++ show tokens
 
 lookAhead :: [Token] -> Token
 lookAhead [] = TokenEnd
