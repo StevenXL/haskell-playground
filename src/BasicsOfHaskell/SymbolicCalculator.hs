@@ -63,7 +63,11 @@ number c str = TokenNumber number : tokenize rest
 
 -- THE CODE IN THIS SECTION IS OUR PARSER
 parse :: [Token] -> Tree
-parse = undefined
+parse toks =
+  let (tree, toks') = expression toks
+   in if null toks'
+        then tree
+        else error $ "Leftover tokens: " ++ show toks'
 
 expression :: [Token] -> (Tree, [Token])
 expression tokens =
@@ -101,10 +105,10 @@ factor tokens =
         let (factTree, toks) = factor (accept tokens)
          in (UnaryNode op factTree, toks)
     TokenLParen ->
-      let (expTree, toks) = expression (accept toks)
-       in if lookAhead toks /= TokenRParen
+      let (expTree, toks') = expression (accept tokens)
+       in if lookAhead toks' /= TokenRParen
             then error "Missing right parenthesis"
-            else (expTree, accept toks)
+            else (expTree, accept toks')
     _ -> error $ "Parse error on tokens: " ++ show tokens
 
 lookAhead :: [Token] -> Token
