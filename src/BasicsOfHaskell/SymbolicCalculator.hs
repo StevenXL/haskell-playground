@@ -6,6 +6,7 @@ import qualified Data.Map as Map
 
 newtype Evaluator a =
   Evaluator (Either String a)
+  deriving (Show)
 
 bindE :: Evaluator a -> (a -> Evaluator b) -> Evaluator b
 bindE (Evaluator (Left str)) _ = Evaluator $ Left str
@@ -134,38 +135,35 @@ accept :: [Token] -> [Token]
 accept [] = error "Nothing to accept"
 accept (t:ts) = ts
 
-evaluate :: Tree -> SymbolTable -> (Double, SymbolTable)
+evaluate :: Tree -> SymbolTable -> Evaluator (Double, SymbolTable)
 evaluate (SumNode op lTree rTree) symTab =
-  let (left, symTab') = evaluate lTree symTab
-      (right, symTab'') = evaluate rTree symTab'
-   in case op of
-        Minus -> (left - right, symTab'')
-        Plus -> (left + right, symTab'')
+  evaluate lTree symTab `bindE` \(left, symTab') ->
+    evaluate rTree symTab' `bindE` \(right, symTab'') ->
+      case op of
+        Minus -> returnE (left - right, symTab'')
+        Plus -> returnE (left + right, symTab'')
 evaluate (ProdNode op lTree rTree) symTab =
-  let (left, symTab') = evaluate lTree symTab
-      (right, symTab'') = evaluate rTree symTab
-   in case op of
-        Mult -> (left * right, symTab'')
-        Div -> (left / right, symTab'')
-evaluate (AssignNode str t) symTab =
-  let (v, symTab') = evaluate t symTab
-      (_, symTab'') = addSymbol str v symTab'
-   in (v, symTab'')
+  evaluate lTree symTab `bindE` \(left, symTab') ->
+    evaluate rTree symTab' `bindE` \(right, symTab'') ->
+      case op of
+        Mult -> returnE (left * right, symTab'')
+        Div -> returnE (left / right, symTab'')
+evaluate (AssignNode str tree) symTab =
+  evaluate tree symTab `bindE` \(v, symTab') ->
+    addSymbol str v symTab' `bindE` \(_, symTab'') -> returnE (v, symTab'')
 evaluate (UnaryNode op tree) symTab =
-  let (x, symTab') = evaluate tree symTab
-   in case op of
-        Minus -> (-x, symTab')
-        Plus -> (x, symTab')
-evaluate (NumNode d) symTab = (d, symTab)
-evaluate (VarNode str) symTab = (val, symTab)
-  where
-    val =
-      case Map.lookup str symTab of
-        Nothing -> error ("Undefined variable " ++ str)
-        Just v -> v
+  evaluate tree symTab `bindE` \(v, symTab') ->
+    case op of
+      Plus -> returnE (v, symTab')
+      Minus -> returnE (negate v, symTab')
+evaluate (NumNode d) symTab = returnE (d, symTab)
+evaluate (VarNode str) symTab =
+  case Map.lookup str symTab of
+    Just v -> returnE (v, symTab)
+    Nothing -> failE $ "Undefined variable " ++ str
 
-addSymbol :: String -> Double -> SymbolTable -> ((), SymbolTable)
-addSymbol name val symTab = ((), Map.insert name val symTab)
+addSymbol :: String -> Double -> SymbolTable -> Evaluator ((), SymbolTable)
+addSymbol name val symTab = returnE $ ((), Map.insert name val symTab)
 
 operator :: Char -> Operator
 operator '+' = Plus
