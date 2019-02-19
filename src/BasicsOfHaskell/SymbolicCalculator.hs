@@ -2,6 +2,7 @@ module BasicsOfHaskell.SymbolicCalculator where
 
 import qualified Data.Char as Char
 import qualified Data.List as List
+import qualified Data.Map as Map
 
 data Operator
   = Plus
@@ -34,6 +35,8 @@ data Tree
   | NumNode Double
   | VarNode String
   deriving (Show)
+
+type SymbolTable = Map.Map String Double
 
 -- THE CODE IN THIS SECTION IS OUR LEXER
 -- A LEXER CONVERTS OUR STRING INTO TOKENS
@@ -118,27 +121,27 @@ accept :: [Token] -> [Token]
 accept [] = error "Nothing to accept"
 accept (t:ts) = ts
 
-evaluate :: Tree -> Double
-evaluate (SumNode op lTree rTree) =
-  let left = evaluate lTree
-      right = evaluate rTree
+evaluate :: Tree -> SymbolTable -> (Double, SymbolTable)
+evaluate (SumNode op lTree rTree) symTab =
+  let (left, symTab') = evaluate lTree symTab
+      (right, symTab'') = evaluate rTree symTab'
    in case op of
-        Minus -> left - right
-        Plus -> left + right
-evaluate (ProdNode op lTree rTree) =
-  let left = evaluate lTree
-      right = evaluate rTree
+        Minus -> (left - right, symTab'')
+        Plus -> (left + right, symTab'')
+evaluate (ProdNode op lTree rTree) symTab =
+  let (left, symTab') = evaluate lTree symTab
+      (right, symTab'') = evaluate rTree symTab
    in case op of
-        Mult -> left * right
-        Div -> left / right
-evaluate (AssignNode str t) = undefined
-evaluate (UnaryNode op tree) =
-  let x = evaluate tree
+        Mult -> (left * right, symTab'')
+        Div -> (left / right, symTab'')
+evaluate (AssignNode str t) symTab = undefined
+evaluate (UnaryNode op tree) symTab =
+  let (x, symTab') = evaluate tree symTab
    in case op of
-        Minus -> -x
-        Plus -> x
-evaluate (NumNode d) = d
-evaluate (VarNode str) = undefined
+        Minus -> (-x, symTab')
+        Plus -> (x, symTab')
+evaluate (NumNode d) symTab = (d, symTab)
+evaluate (VarNode str) symTab = undefined
 
 operator :: Char -> Operator
 operator '+' = Plus
