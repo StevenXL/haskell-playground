@@ -119,7 +119,26 @@ accept [] = error "Nothing to accept"
 accept (t:ts) = ts
 
 evaluate :: Tree -> Double
-evaluate = undefined
+evaluate (SumNode op lTree rTree) =
+  let left = evaluate lTree
+      right = evaluate rTree
+   in case op of
+        Minus -> left - right
+        Plus -> left + right
+evaluate (ProdNode op lTree rTree) =
+  let left = evaluate lTree
+      right = evaluate rTree
+   in case op of
+        Mult -> left * right
+        Div -> left / right
+evaluate (AssignNode str t) = undefined
+evaluate (UnaryNode op tree) =
+  let x = evaluate tree
+   in case op of
+        Minus -> -x
+        Plus -> x
+evaluate (NumNode d) = d
+evaluate (VarNode str) = undefined
 
 operator :: Char -> Operator
 operator '+' = Plus
