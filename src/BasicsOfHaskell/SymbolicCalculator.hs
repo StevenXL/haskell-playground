@@ -134,14 +134,25 @@ evaluate (ProdNode op lTree rTree) symTab =
    in case op of
         Mult -> (left * right, symTab'')
         Div -> (left / right, symTab'')
-evaluate (AssignNode str t) symTab = undefined
+evaluate (AssignNode str t) symTab =
+  let (v, symTab') = evaluate t symTab
+      (_, symTab'') = addSymbol str v symTab'
+   in (v, symTab'')
 evaluate (UnaryNode op tree) symTab =
   let (x, symTab') = evaluate tree symTab
    in case op of
         Minus -> (-x, symTab')
         Plus -> (x, symTab')
 evaluate (NumNode d) symTab = (d, symTab)
-evaluate (VarNode str) symTab = undefined
+evaluate (VarNode str) symTab = (val, symTab)
+  where
+    val =
+      case Map.lookup str symTab of
+        Nothing -> error ("Undefined variable " ++ str)
+        Just v -> v
+
+addSymbol :: String -> Double -> SymbolTable -> ((), SymbolTable)
+addSymbol name val symTab = ((), Map.insert name val symTab)
 
 operator :: Char -> Operator
 operator '+' = Plus
