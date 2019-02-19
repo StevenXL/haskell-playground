@@ -7,6 +7,16 @@ import qualified Data.Map as Map
 newtype Evaluator a =
   Evaluator (Either String a)
 
+bindE :: Evaluator a -> (a -> Evaluator b) -> Evaluator b
+bindE (Evaluator (Left str)) _ = Evaluator $ Left str
+bindE (Evaluator (Right a)) k = k a
+
+returnE :: a -> Evaluator a
+returnE = Evaluator . Right
+
+failE :: String -> Evaluator a
+failE = Evaluator . Left
+
 data Operator
   = Plus
   | Minus
