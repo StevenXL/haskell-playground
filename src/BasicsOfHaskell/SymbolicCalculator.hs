@@ -4,6 +4,9 @@ import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified Data.Map as Map
 
+newtype Evaluator a =
+  Evaluator (Either String a)
+
 data Operator
   = Plus
   | Minus
