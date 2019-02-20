@@ -1,5 +1,6 @@
 module BasicsOfHaskell.SymbolicCalculator where
 
+import qualified Control.Monad as Monad
 import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified Data.Map as Map
@@ -7,6 +8,16 @@ import qualified Data.Map as Map
 newtype Evaluator a =
   Evaluator (Either String a)
   deriving (Show)
+
+instance Monad Evaluator where
+  (>>=) = bindE
+
+instance Applicative Evaluator where
+  pure = returnE
+  (<*>) = Monad.ap
+
+instance Functor Evaluator where
+  fmap = Monad.liftM
 
 bindE :: Evaluator a -> (a -> Evaluator b) -> Evaluator b
 bindE (Evaluator (Left str)) _ = Evaluator $ Left str
