@@ -128,3 +128,9 @@ word = many letter
 
 digits :: Parser String
 digits = many digit
+
+many1 :: Parser a -> Parser [a]
+many1 p = do
+  a <- p
+  as <- many p
+  return (a : as)
