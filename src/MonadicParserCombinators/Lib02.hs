@@ -90,3 +90,20 @@ isLower = isBetween 'a' 'z'
 
 isUpper :: Char -> Bool
 isUpper = isBetween 'A' 'Z'
+
+-- PARSER IS A MONAD
+instance Functor Parser where
+  fmap :: (a -> b) -> Parser a -> Parser b
+  fmap f p = p >>= \a -> return (f a)
+
+instance Applicative Parser where
+  pure :: a -> Parser a
+  pure = return
+  (<*>) :: Parser (a -> b) -> Parser a -> Parser b
+  p <*> q = p >>= \f -> fmap f q
+
+instance Monad Parser where
+  return :: a -> Parser a
+  return = result
+  (>>=) :: Parser a -> (a -> Parser b) -> Parser b
+  (>>=) = bind
