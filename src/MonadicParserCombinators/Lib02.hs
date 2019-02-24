@@ -70,18 +70,6 @@ letter = lower `plus` upper
 alphaNum :: Parser Char
 alphaNum = letter `plus` digit
 
-word :: Parser String
-word = do
-  l <- letter
-  ls <- word
-  return (l : ls)
-
-digits :: Parser String
-digits = do
-  d <- digit
-  ds <- digits
-  return (d : ds)
-
 -- ALL OF THESE ARE DEFINED IN DATA.CHAR; WE ARE DOING THIS FOR FUN
 -- isBetween is a closed interval
 isBetween :: Char -> Char -> Char -> Bool
@@ -125,3 +113,18 @@ string (c:cs) = do
 string' :: String -> Parser String
 string' [] = return []
 string' (c:cs) = char c >>= \c' -> string' cs >>= \cs' -> return (c' : cs')
+
+-- COMBINATORS FOR REPETITION
+many :: Parser a -> Parser [a]
+many p = neP `plus` return []
+  where
+    neP = do
+      a <- p
+      as <- many p
+      return (a : as)
+
+word :: Parser String
+word = many letter
+
+digits :: Parser String
+digits = many digit
