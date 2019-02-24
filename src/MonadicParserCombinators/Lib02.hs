@@ -71,12 +71,17 @@ alphaNum :: Parser Char
 alphaNum = letter `plus` digit
 
 word :: Parser String
-word = neWord `plus` result ""
-  where
-    neWord = letter `bind` \l -> word `bind` \w -> result (l : w)
+word = do
+  l <- letter
+  ls <- word
+  return (l : ls)
 
--- word :: Parser String
--- word = letter `bind` \l -> word `bind` \w -> result (l:w)
+digits :: Parser String
+digits = do
+  d <- digit
+  ds <- digits
+  return (d : ds)
+
 -- ALL OF THESE ARE DEFINED IN DATA.CHAR; WE ARE DOING THIS FOR FUN
 -- isBetween is a closed interval
 isBetween :: Char -> Char -> Char -> Bool
