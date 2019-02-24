@@ -134,3 +134,14 @@ many1 p = do
   a <- p
   as <- many p
   return (a : as)
+
+nat :: Parser Int
+nat = fmap read $ many1 digit
+
+int :: Parser Int
+int = do
+  op <- char '-' `plus` return '+'
+  i <- nat
+  case op of
+    '-' -> return (negate i)
+    '+' -> return i
