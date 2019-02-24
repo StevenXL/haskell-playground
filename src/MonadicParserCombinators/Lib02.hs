@@ -107,3 +107,16 @@ instance Monad Parser where
   return = result
   (>>=) :: Parser a -> (a -> Parser b) -> Parser b
   (>>=) = bind
+
+-- PARSER COMBINATORS THAT ARE EASIER TO DEFINE THANKS TO MONAD COMPREHENSION /
+-- DO NOTATION
+string :: String -> Parser String
+string "" = return ""
+string (c:cs) = do
+  _ <- char c
+  _ <- string cs
+  return (c : cs)
+
+string' :: String -> Parser String
+string' [] = return []
+string' (c:cs) = char c >>= \c' -> string' cs >>= \cs' -> return (c' : cs')
