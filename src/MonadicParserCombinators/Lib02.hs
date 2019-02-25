@@ -161,8 +161,8 @@ int = do
     '+' -> return i
 
 listOfInts :: Parser [Int]
-listOfInts = do
-  _ <- char '['
-  is <- sepBy1 int (char ',')
-  _ <- char ']'
-  return is
+listOfInts = bracket openingBracket ints closingBracket
+  where
+    openingBracket = char '['
+    ints = sepBy1 int (char ',')
+    closingBracket = char ']'
