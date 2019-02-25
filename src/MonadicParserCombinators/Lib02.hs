@@ -145,3 +145,11 @@ int = do
   case op of
     '-' -> return (negate i)
     '+' -> return i
+
+listOfInts :: Parser [Int]
+listOfInts = do
+  _ <- char '['
+  i <- int
+  is <- many (char ',' >> int)
+  _ <- char ']'
+  return (i : is)
