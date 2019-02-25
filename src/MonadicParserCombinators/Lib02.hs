@@ -153,3 +153,9 @@ listOfInts = do
   is <- many (char ',' >> int)
   _ <- char ']'
   return (i : is)
+
+sepBy1 :: Parser a -> Parser b -> Parser [a]
+sepBy1 p sep = do
+  a <- p
+  as <- many (sep >> p)
+  return (a : as)
