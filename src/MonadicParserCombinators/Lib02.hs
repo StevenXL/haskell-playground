@@ -135,6 +135,20 @@ many1 p = do
   as <- many p
   return (a : as)
 
+sepBy1 :: Parser a -> Parser b -> Parser [a]
+sepBy1 p sep = do
+  a <- p
+  as <- many (sep >> p)
+  return (a : as)
+
+bracket :: Parser a -> Parser b -> Parser c -> Parser b
+bracket left p right = do
+  _ <- left
+  b <- p
+  _ <- right
+  return b
+
+-- PARSERS BASED ON REPETITION
 nat :: Parser Int
 nat = fmap read $ many1 digit
 
@@ -152,9 +166,3 @@ listOfInts = do
   is <- sepBy1 int (char ',')
   _ <- char ']'
   return is
-
-sepBy1 :: Parser a -> Parser b -> Parser [a]
-sepBy1 p sep = do
-  a <- p
-  as <- many (sep >> p)
-  return (a : as)
