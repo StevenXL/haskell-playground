@@ -141,6 +141,9 @@ sepBy1 p sep = do
   as <- many (sep >> p)
   return (a : as)
 
+sepBy :: Parser a -> Parser b -> Parser [a]
+sepBy p sep = (sepBy1 p sep) `plus` return []
+
 bracket :: Parser a -> Parser b -> Parser c -> Parser b
 bracket left p right = do
   _ <- left
