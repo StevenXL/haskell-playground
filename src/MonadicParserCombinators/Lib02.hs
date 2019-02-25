@@ -149,10 +149,9 @@ int = do
 listOfInts :: Parser [Int]
 listOfInts = do
   _ <- char '['
-  i <- int
-  is <- many (char ',' >> int)
+  is <- sepBy1 int (char ',')
   _ <- char ']'
-  return (i : is)
+  return is
 
 sepBy1 :: Parser a -> Parser b -> Parser [a]
 sepBy1 p sep = do
