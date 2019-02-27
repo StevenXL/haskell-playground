@@ -176,13 +176,7 @@ listOfInts = bracket openingBracket ints closingBracket
 -- factor ::= nat | ( expr )
 -- TRANSLATION OF BNF NOTATION INTO A PARSER
 expr :: Parser Int
-expr = do
-  x <- factor
-  fys <- many addOpFactorPairs
-  return (foldl performOp x fys)
-  where
-    addOpFactorPairs = addop >>= \f -> factor >>= \y -> return (f, y)
-    performOp acc (op, fact) = op acc fact
+expr = factor `chainl1` addop
 
 addop :: Parser (Int -> Int -> Int)
 addop = do
@@ -199,3 +193,11 @@ factor = nat `plus` bracketedExpr
     bracketedExpr = bracket openingBracket expr closingBracket
     openingBracket = char '('
     closingBracket = char ')'
+
+chainl1 :: Parser a -> Parser (a -> a -> a) -> Parser a
+chainl1 p op = do
+  x <- p
+  fys <- many (op >>= \f -> p >>= \y -> return (f, y))
+  return (foldl performOp x fys)
+  where
+    performOp acc (op, fact) = op acc fact
