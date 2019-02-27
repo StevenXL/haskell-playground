@@ -176,13 +176,13 @@ listOfInts = bracket openingBracket ints closingBracket
 -- factor ::= nat | ( expr )
 -- TRANSLATION OF BNF NOTATION INTO A PARSER
 expr :: Parser Int
-expr = exprParser `plus` factor
+expr = do
+  x <- factor
+  fys <- many addOpFactorPairs
+  return (foldl performOp x fys)
   where
-    exprParser = do
-      x <- expr -- expr parser is left-recursive; this will never make any progress; see article
-      f <- addop
-      y <- factor
-      return (f x y)
+    addOpFactorPairs = addop >>= \f -> factor >>= \y -> return (f, y)
+    performOp acc (op, fact) = op acc fact
 
 addop :: Parser (Int -> Int -> Int)
 addop = do
