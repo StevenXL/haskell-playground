@@ -169,3 +169,33 @@ listOfInts = bracket openingBracket ints closingBracket
     openingBracket = char '['
     ints = sepBy1 int (char ',')
     closingBracket = char ']'
+
+-- BNF NOTATION
+-- expr ::= expr addop factor | factor
+-- addop ::= + | -
+-- factor ::= nat | ( expr )
+-- TRANSLATION OF BNF NOTATION INTO A PARSER
+expr :: Parser Int
+expr = exprParser `plus` factor
+  where
+    exprParser = do
+      x <- expr -- expr parser is left-recursive; this will never make any progress; see article
+      f <- addop
+      y <- factor
+      return (f x y)
+
+addop :: Parser (Int -> Int -> Int)
+addop = do
+  op <- plusOrMinus
+  case op of
+    '+' -> return (+)
+    '-' -> return (-)
+  where
+    plusOrMinus = char '+' `plus` char '-'
+
+factor :: Parser Int
+factor = nat `plus` bracketedExpr
+  where
+    bracketedExpr = bracket openingBracket expr closingBracket
+    openingBracket = char '('
+    closingBracket = char ')'
