@@ -3,9 +3,23 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module ToOvercome.BasicTypeLevelProgramming where
+
+import qualified Data.Aeson as A
+import Data.Aeson (FromJSON(..), ToJSON(..), Value(..))
+import Data.Aeson.Types (Parser, typeMismatch)
+import qualified Data.ByteString.Lazy.Char8 as C
+import Data.Proxy (Proxy(..))
+import qualified Data.Vector as V
+import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
+
 ----------------GLOSSARY------------------------
 -- TYPE: A type is a name for a set of values
 --
@@ -37,7 +51,6 @@ module ToOvercome.BasicTypeLevelProgramming where
 -- type of Succ is (Nat -> Nat).
 -- With DataKinds, we also get the kind 'Nat, the type 'Zero, and the type
 -- 'Succ. Furthermore, 'Zero is of kind Nat, and 'Succ is of kind Nat -> Nat.
-
 -- GADTs: GADTs allow us to provide extra type information when matching against
 -- data constructors.
 --
@@ -61,6 +74,10 @@ module ToOvercome.BasicTypeLevelProgramming where
 -- information that is encoded in the type system. The compiler, of course,
 -- cannot help us with information that it doesn't know - i.e., that is not in
 -- the type system.
+--
+-- The algebra of a type also includes deconstructing it my pattern matching on
+-- data constructors! This is how we implemented the "instance ToJSON (HList (a
+-- ': as))"
 ----------------QUESTIONS------------------------
 -- QUESTION 1: Let's talk about type families. What is a type family? A type
 -- family is a function that operates on types. A type family accepts a type
@@ -86,21 +103,33 @@ module ToOvercome.BasicTypeLevelProgramming where
 -- really talking about 'Zero. This line of reasoning is also applicable to the
 -- second indented line.
 --
--- QUESTION 4: Let's talk about inductive versus recursive. What is induction
--- and recursion. I can't verbalize the answer to that question, which means my
--- thinking around it is muddy.
-
+-- QUESTION 4: Let's talk about inductive versus recursive. What is induction?
+-- What does it mean for something to be defined inductively? What is recursion?
+-- I've lost the ability to verbalize the answer to these questions, which means
+-- that my mental model around them is deficient.
+--
+-- QUESTION 5: I do not understand why the kind of '[] is [k].
+--
+-- QUESTION 6: In the definition for the type (>>), would it make sense to
+-- define it like so:
+-- newtype (s :: Symbol) >> a = Named a
+-- To ensure that we can only use type-level strings as the type for s? Or am I
+-- missing some nuance?
+----------------GADTs Example------------------------
 data IntBool a where
-  Int :: Int -> IntBool Int
-  Bool :: Bool -> IntBool Bool
+  Int' :: Int -> IntBool Int
+  Bool' :: Bool -> IntBool Bool
 
 extractIntBool :: IntBool a -> a -- depending on the data constructor matched, this function will return a value of type Int or a value of type Bool
-extractIntBool (Int i) = i
-extractIntBool (Bool b) = b
+extractIntBool (Int' i) = i
+extractIntBool (Bool' b) = b
 
+----------------INDEXED VECTORS EXAMPLE------------------------
 -- We combine the power of DataKind and GADTs to create a lengh-indexed list.
 -- This means that we can, statically, prevent out-of-bounds errors.
-data Nat = Zero | Succ Nat
+data Nat
+  = Zero
+  | Succ Nat
 
 data Vector (n :: Nat) a where
   VNil :: Vector 'Zero a
@@ -113,9 +142,87 @@ instance Show a => Show (Vector n a) where
 
 -- closed type family
 type family Add (n :: Nat) (m :: Nat) where
-    Add Zero m = m
-    Add (Succ n) m = Succ (Add n m)
+  Add Zero m = m
+  Add (Succ n) m = Succ (Add n m)
 
 append :: Vector n a -> Vector m a -> Vector (Add n m) a
 append VNil xs = xs
 append (VCons a as) xs = VCons a (append as xs)
+
+----------------HETEROGENOUS LIST EXAMPLE------------------------
+-- We know that xs is a TYPE VARIABLE. As a result, it can only be instantiated
+-- to a type.
+data HList xs where
+  HNil :: HList '[] -- We know that '[] is the data constructor [] lifted to the type level, both because of the tick, and because it is what xs is instantiated to
+  HCons :: a -> HList as -> HList (a ': as)
+
+instance Show (HList '[]) where
+  show :: HList '[] -> String
+  show _ = "HNil"
+
+instance (Show (HList as), Show a) => Show (HList (a ': as)) where
+  show :: HList (a ': as) -> String
+  show (HCons a as) = "HCons " ++ show a ++ " (" ++ show as ++ ")"
+
+----------------EXCERCISE: WRITE AESON INSTANCE OF HLIST------------------------
+instance ToJSON (HList '[]) where
+  toJSON :: HList '[] -> Value
+  toJSON _ = Array mempty
+
+instance (ToJSON a, ToJSON (HList as)) => ToJSON (HList (a ': as)) where
+  toJSON :: HList (a ': as) -> Value
+  toJSON (HCons a as) = Array (vectorForA <> vectorForAs)
+    where
+      vectorForA = V.singleton (toJSON a)
+      (Array vectorForAs) = toJSON as
+
+instance FromJSON (HList '[]) where
+  parseJSON :: Value -> Parser (HList '[])
+  parseJSON (Array _) = return HNil
+  parseJSON invalid = typeMismatch "HList '[]" invalid
+
+instance (FromJSON a, FromJSON (HList as)) => FromJSON (HList (a ': as)) where
+  parseJSON :: Value -> Parser (HList (a ': as))
+  parseJSON (Array v) = do
+    rest <- parseJSON (Array $ V.tail v) -- this is an example of return type polymorphism!
+    first <- parseJSON (V.head v)
+    return $ HCons first rest
+  parseJSON invalid = typeMismatch "HList (a ': as)" invalid
+
+main :: IO ()
+main = do
+  let hlist = HCons "Hello" (HCons (1 :: Int) (HCons True HNil))
+  print $ "My hlist is: " ++ show hlist
+  let encodedHList = A.encode hlist
+  C.putStrLn $ (C.pack "My hlist encoded is: ") <> encodedHList
+  let decodedHList = A.decode encodedHList
+  putStrLn "My hlist decoded is:"
+  print (decodedHList :: Maybe (HList '[ [Char], Int, Bool]))
+
+----------------EXTENSIBLE RECORDS EXAMPLE------------------------
+-- s is a type variable
+-- a is a type variable
+-- >> is a type constructor of kind (* -> * -> *)
+-- Named is a data constructor of type (a -> (s >> a))
+newtype (s :: Symbol) >> a =
+  Named a
+
+-- Question: If we had done newtype (s :: Symbol) >> a = Named a, what would the
+-- kind of the type constructor >> be?
+-- Answer: Symbol -> * -> *
+data HRec xs where
+  HREmpty :: HRec '[]
+  HRCons :: (s >> a) -> HRec xs -> HRec (s >> a ': xs)
+
+instance Show (HRec '[]) where
+  show :: HRec '[] -> String
+  show _ = "HREmpty"
+
+instance (KnownSymbol s, Show a, Show (HRec xs)) =>
+         Show (HRec ((s >> a) ': xs)) where
+  show :: HRec ((s >> a) ': xs) -> String
+  show (HRCons (Named a) as) = "(" ++ key ++ ": " ++ val ++ ") " ++ rest
+    where
+      key = (symbolVal @s) Proxy
+      val = show a
+      rest = (show as)
