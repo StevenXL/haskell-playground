@@ -28,6 +28,8 @@ dependencies:
 - mtl
 - random
 - first-class-families
+- aeson
+- vector
 
 library:
   source-dirs: src
