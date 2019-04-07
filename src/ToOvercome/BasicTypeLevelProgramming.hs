@@ -13,10 +13,12 @@
 module ToOvercome.BasicTypeLevelProgramming where
 
 import qualified Data.Aeson as A
-import Data.Aeson (FromJSON(..), ToJSON(..), Value(..))
+import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), (.=))
 import Data.Aeson.Types (Parser, typeMismatch)
 import qualified Data.ByteString.Lazy.Char8 as C
+import qualified Data.HashMap.Strict as H
 import Data.Proxy (Proxy(..))
+import qualified Data.Text as T
 import qualified Data.Vector as V
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 
@@ -82,7 +84,8 @@ import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
 -- QUESTION 1: Let's talk about type families. What is a type family? A type
 -- family is a function that operates on types. A type family accepts a type
 -- and, when fully saturated, returns a type. Type family comes in three
--- different flavors, open, closed, and associated.
+-- different flavors, open, closed, and associated. What is the difference
+-- between them?
 --
 -- QUESTION 2: All lowercase names in a type expression refer to a type
 -- variable. This includes data type declarations (including GADTs), type family
@@ -226,3 +229,26 @@ instance (KnownSymbol s, Show a, Show (HRec xs)) =>
       key = (symbolVal @s) Proxy
       val = show a
       rest = (show as)
+
+instance ToJSON (HRec '[]) where
+  toJSON :: HRec '[] -> Value
+  toJSON _ = A.object []
+
+-- You have to keep in mind that any lower-case letter in a type expression is a
+-- TYPE VARIABLE. Once we keep that clear in our head, everything else false
+-- into place.
+-- Remember that >> is a type constructor of kind Symbol -> * -> *; so (s >> a)
+-- is a type
+instance (ToJSON (HRec as), ToJSON (s >> a)) =>
+         ToJSON (HRec (s >> a ': as)) where
+  toJSON :: HRec (s >> a ': as) -> Value
+  toJSON (HRCons named rest) =
+    let Object named' = A.toJSON named
+        Object rest' = A.toJSON rest
+     in A.object (H.toList $ H.union named' rest')
+
+instance (KnownSymbol s, ToJSON a) => ToJSON (s >> a) where
+  toJSON :: (s >> a) -> Value
+  toJSON (Named a) = A.object [name .= A.toJSON a]
+    where
+      name = T.pack $ (symbolVal @s) Proxy

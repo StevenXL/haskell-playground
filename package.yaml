@@ -30,6 +30,8 @@ dependencies:
 - first-class-families
 - aeson
 - vector
+- unordered-containers
+- text
 
 library:
   source-dirs: src
