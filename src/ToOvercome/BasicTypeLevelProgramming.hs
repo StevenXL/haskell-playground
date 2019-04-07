@@ -252,3 +252,23 @@ instance (KnownSymbol s, ToJSON a) => ToJSON (s >> a) where
   toJSON (Named a) = A.object [name .= A.toJSON a]
     where
       name = T.pack $ (symbolVal @s) Proxy
+
+instance FromJSON (HRec '[]) where
+  parseJSON :: Value -> Parser (HRec '[])
+  parseJSON (Object _) = return HREmpty
+  parseJSON invalid = typeMismatch "HRec '[]" invalid
+
+instance (KnownSymbol s, FromJSON a, FromJSON (HRec as)) =>
+         FromJSON (HRec (s >> a ': as)) where
+  parseJSON :: Value -> Parser (HRec (s >> a ': as))
+  parseJSON (Object hashMap) = do
+    case (H.lookup keyText hashMap) of
+      Nothing -> fail ("Key not found: " ++ keyString)
+      Just v -> do
+        a <- parseJSON v
+        rest <- parseJSON $ Object (H.delete keyText hashMap)
+        return $ HRCons (Named a) rest
+    where
+      keyText = T.pack keyString
+      keyString = symbolVal (Proxy @s)
+  parseJSON invalid = typeMismatch "Non-Empty HRec" invalid
