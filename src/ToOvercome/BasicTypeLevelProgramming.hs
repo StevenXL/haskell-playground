@@ -210,6 +210,12 @@ main = do
 newtype (s :: Symbol) >> a =
   Named a
 
+instance FromJSON a => FromJSON (s >> a) where
+  parseJSON :: Value -> Parser (s >> a)
+  parseJSON v = do
+    a <- parseJSON v
+    return (Named a)
+
 -- Question: If we had done newtype (s :: Symbol) >> a = Named a, what would the
 -- kind of the type constructor >> be?
 -- Answer: Symbol -> * -> *
@@ -258,16 +264,16 @@ instance FromJSON (HRec '[]) where
   parseJSON (Object _) = return HREmpty
   parseJSON invalid = typeMismatch "HRec '[]" invalid
 
-instance (KnownSymbol s, FromJSON a, FromJSON (HRec as)) =>
+instance (KnownSymbol s, FromJSON (s >> a), FromJSON (HRec as)) =>
          FromJSON (HRec (s >> a ': as)) where
   parseJSON :: Value -> Parser (HRec (s >> a ': as))
   parseJSON (Object hashMap) = do
     case (H.lookup keyText hashMap) of
       Nothing -> fail ("Key not found: " ++ keyString)
       Just v -> do
-        a <- parseJSON v
+        named <- parseJSON v
         rest <- parseJSON $ Object (H.delete keyText hashMap)
-        return $ HRCons (Named a) rest
+        return $ HRCons named rest
     where
       keyText = T.pack keyString
       keyString = symbolVal (Proxy @s)
