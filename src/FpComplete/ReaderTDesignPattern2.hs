@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module FpComplete.ReaderTDesignPattern1 where
+module FpComplete.ReaderTDesignPattern2 where
 
 import Control.Concurrent.STM.TVar (TVar, modifyTVar', newTVarIO, readTVarIO)
 import Control.Monad.Reader
@@ -18,6 +19,18 @@ data EnvOne = EnvOne
   , envBalance :: TVar Int
   }
 
+class HasBalance a where
+  getBalance :: a -> TVar Int
+
+instance HasBalance EnvOne where
+  getBalance = envBalance
+
+class HasLog a where
+  getLog :: a -> (String -> IO ())
+
+instance HasLog EnvOne where
+  getLog = envLog
+
 newtype AppOne a = AppOne
   { unAppOne :: ReaderT EnvOne IO a
   } deriving (Functor, Applicative, Monad, MonadReader EnvOne, MonadIO)
@@ -25,14 +38,21 @@ newtype AppOne a = AppOne
 runAppOne :: AppOne a -> EnvOne -> IO a
 runAppOne app env = runReaderT (unAppOne app) env
 
-modify :: (MonadReader EnvOne m, MonadIO m) => (Int -> Int) -> m ()
+-- CHANGE 1: Change modify so that it is NOT hard-coded to expect a specific
+-- environment. Instead, the environment that it does get is an instance of
+-- HasBalance, which means we can apply the getBalance method to the
+-- environment.
+modify :: (MonadReader env m, MonadIO m, HasBalance env) => (Int -> Int) -> m ()
 modify f = do
-  tVar <- envBalance <$> ask
+  tVar <- getBalance <$> ask
   liftIO $ atomically $ modifyTVar' tVar f
 
-logSomething :: (MonadIO m, MonadReader EnvOne m) => String -> m ()
+-- CHANGE 1: Change logSomething so that it doesn't require a specific
+-- environment. Instead, it requires that the environment implements a specific
+-- typeclass.
+logSomething :: (MonadIO m, MonadReader env m, HasLog env) => String -> m ()
 logSomething s = do
-  logFunc <- envLog <$> ask
+  logFunc <- getLog <$> ask
   liftIO $ logFunc s
 
 appOne :: AppOne ()
