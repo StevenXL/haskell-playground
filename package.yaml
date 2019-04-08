@@ -32,6 +32,7 @@ dependencies:
 - vector
 - unordered-containers
 - text
+- stm
 
 library:
   source-dirs: src
