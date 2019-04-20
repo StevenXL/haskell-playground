@@ -11,19 +11,31 @@ zero :: Parser a
 zero = \inp -> []
 
 item :: Parser Char
-item = \inp -> case inp of
-                 [] -> []
-                 (x:out) -> [(x, out)]
+item =
+  \inp ->
+    case inp of
+      [] -> []
+      (x:out) -> [(x, out)]
 
--- SINGLE BASIC PARSER COMBINATORS
+-- TWO BASIC PARSER COMBINATORS
 bind :: Parser a -> (a -> Parser b) -> Parser b
-bind p k = \inp -> concat [ k a out | (a, out) <- p inp]
+bind p k = \inp -> concat [k a out | (a, out) <- p inp]
+
+-- plus is going to end up giving us ALL the results of both parsers; if both
+-- parsers succeed, then we get multiple results
+plus :: Parser a -> Parser a -> Parser a
+plus p q = \inp -> (p inp ++ q inp)
 
 -- OTHER PARSERS BUILT FROM COMBINATION OF SIMPLE PARSERS AND BASIC PARSER
 -- COMBINATOR
 sat :: (Char -> Bool) -> Parser Char
 sat p = item `bind` k
-  where k = \c -> if p c then result c else zero
+  where
+    k =
+      \c ->
+        if p c
+          then result c
+          else zero
 
 char :: Char -> Parser Char
 char c = sat (== c)
@@ -37,11 +49,6 @@ lower = sat isLower
 upper :: Parser Char
 upper = sat isUpper
 
--- plus is going to end up giving us ALL the results of both parsers; if both
--- parsers succeed, then we get multiple results
-plus :: Parser a -> Parser a -> Parser a
-plus p q = \inp -> (p inp ++ q inp)
-
 letter :: Parser Char
 letter = lower `plus` upper
 
@@ -50,11 +57,11 @@ alphaNum = letter `plus` digit
 
 word :: Parser String
 word = neWord `plus` result ""
-  where neWord = letter `bind` \l -> word `bind` \w -> result (l : w)
+  where
+    neWord = letter `bind` \l -> word `bind` \w -> result (l : w)
 
 -- word :: Parser String
 -- word = letter `bind` \l -> word `bind` \w -> result (l:w)
-
 -- ALL OF THESE ARE DEFINED IN DATA.CHAR; WE ARE DOING THIS FOR FUN
 -- isBetween is a closed interval
 isBetween :: Char -> Char -> Char -> Bool

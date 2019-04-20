@@ -27,6 +27,13 @@ dependencies:
 - containers
 - mtl
 - rio
+- random
+- first-class-families
+- aeson
+- vector
+- unordered-containers
+- text
+- stm
 
 library:
   source-dirs: src
