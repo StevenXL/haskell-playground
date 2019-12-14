@@ -15,9 +15,7 @@ checkPassword s0 = case (cleanWhitespace s0) of
                       Nothing -> Nothing
                       Just s1 -> case (requireAlpha s1) of
                                      Nothing -> Nothing
-                                     Just s2 -> case (checkPasswordLength s2) of
-                                                     Nothing -> Nothing
-                                                     Just s3 -> Just s3
+                                     Just s2 -> checkPasswordLength s2
 -- PASSWORD VALIDATION RULES
 
 checkPasswordLength :: String -> Maybe String
