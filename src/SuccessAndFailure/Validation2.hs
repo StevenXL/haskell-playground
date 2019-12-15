@@ -10,32 +10,26 @@ main = do
     pass <- prompt "Please enter a password." >> getPass
     print (validatePassword pass)
 
-validatePassword :: String -> String
-validatePassword pass1 = case cleanWhitespace pass1 of
-                         Nothing -> "Your password cannot be empty."
-                         Just pass2 -> case requireAlpha pass2 of
-                                           Nothing -> "Your password cannot contain whitespace or special characters."
-                                           Just pass3 -> case checkPasswordLength pass3 of
-                                                             Nothing -> "Your password must be between 10 and 20 characters."
-                                                             Just pass4 -> pass4
+validatePassword :: String -> Either String String
+validatePassword pass = cleanWhitespace pass >>= requireAlpha >>= checkPasswordLength
 
 -- PASSWORD VALIDATION RULES
 
-checkPasswordLength :: String -> Maybe String
+checkPasswordLength :: String -> Either String String
 checkPasswordLength s = case (length s > 20 || length s < 10) of
-                               True  -> Nothing
-                               False -> Just s
+                               True  -> Left "Your password must be between 10 and 20 characters."
+                               False -> Right s
 
-requireAlpha :: String -> Maybe String
+requireAlpha :: String -> Either String String
 requireAlpha s = case (List.all Char.isAlphaNum s) of
-                     False -> Nothing
-                     True  -> Just s
+                     False -> Left "Your password cannot contain whitespace or special characters."
+                     True  -> Right s
 
-cleanWhitespace :: String -> Maybe String
-cleanWhitespace "" = Nothing
+cleanWhitespace :: String -> Either String String
+cleanWhitespace "" = Left "Your password cannot be empty."
 cleanWhitespace s@(x:xs) = case (Char.isSpace x) of
                              True  -> cleanWhitespace xs
-                             False -> Just s
+                             False -> Right s
 
 prompt :: String -> IO ()
 prompt s = putStr $ s <> "\n> "
