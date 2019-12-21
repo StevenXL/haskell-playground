@@ -20,20 +20,21 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/stevenxl/haskell-playground#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+- aeson
 - attoparsec
-- time
+- base >= 4.7 && < 5
 - bytestring
 - containers
-- mtl
-- rio
-- random
 - first-class-families
-- aeson
-- vector
-- unordered-containers
-- text
+- mtl
+- random
+- rio
 - stm
+- text
+- time
+- unordered-containers
+- validation
+- vector
 
 library:
   source-dirs: src
