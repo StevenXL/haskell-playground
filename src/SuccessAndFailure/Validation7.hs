@@ -12,8 +12,8 @@ import Data.Validation (Validation(..))
 
 main :: IO ()
 main = do
-    userName <- prompt "Please enter your username." >> (Username <$> getLine)
-    pass <- prompt "Please enter your password." >> (Password <$> getLine)
+    userName <- prompt "Please enter your username." *> (Username <$> getLine)
+    pass <- prompt "Please enter your password." *> (Password <$> getLine)
     print (validateUsername userName)
     print (validatePassword pass)
 
