@@ -26,6 +26,7 @@ dependencies:
 - bytestring
 - containers
 - first-class-families
+- hspec
 - mtl
 - random
 - rio
